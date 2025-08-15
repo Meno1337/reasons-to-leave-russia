@@ -31,7 +31,13 @@ toggleViewBtn.addEventListener('click', () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   const page = document.body.dataset.page;
-  if (page === "home") initHome();
+  if (page === "home") {
+    // Принудительно включить список на мобильных
+    if (window.innerWidth <= 700) {
+      localStorage.setItem('view', 'list');
+    }
+    initHome();
+  }
   if (page === "add") initAdd();
 });
 

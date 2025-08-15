@@ -31,3 +31,24 @@ dialog{border:none;border-radius:12px;max-width:800px;width:90%;background:var(-
 dialog article{padding:16px}
 dialog::backdrop{background:rgba(0,0,0,.6)}
 a.source{color:var(--accent);word-break:break-all}
+@media (max-width: 700px) {
+  #toggleView, .viewBtn, [data-view-btn] {
+    display: none !important;
+  }
+    #results.cards,
+  .cards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px;
+    width: 100%;
+  }
+  #results.cards .card,
+  .cards .card {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    display: block !important;
+    margin: 0 !important;
+  }
+}
