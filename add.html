@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Добавить запись</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Небольшие локальные правки для простоты */
+    body{font-family:system-ui,Arial;margin:16px;background:#0b0c10;color:#e6e8ec}
+    form{max-width:900px;margin:auto;display:grid;gap:12px}
+    label{font-size:13px;color:#9aa3b2}
+    input,select,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #2b3038;background:#0f1116;color:inherit}
+    .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+    .sources>div{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    .btn{padding:8px 12px;border-radius:8px;border:none;cursor:pointer;background:#59a5ff;color:#001025}
+    .ghost{background:transparent;border:1px solid #59a5ff;color:#59a5ff}
+    pre{background:#0f1116;border:1px solid #242836;padding:10px;border-radius:8px;color:#9aa3b2}
+    /* отступ у кнопки закрыть (если есть) */
+    .close-button{margin:15px}
+  </style>
+</head>
+<body>
+  <header style="display:flex;justify-content:space-between;align-items:center;max-width:900px;margin:0 auto 12px">
+    <a href="index.html" style="color:#59a5ff;text-decoration:none">← Назад</a>
+    <h1 style="margin:0;font-size:18px">Добавить запись</h1>
+    <div></div>
+  </header>
+
+  <form id="form">
+    <div class="row">
+      <div>
+        <label>Слаг</label>
+        <input name="slug" placeholder="2012-fz-139" required>
+      </div>
+      <div>
+        <label>Год (2010–2025)</label>
+        <input name="yearFrom" type="number" min="2010" max="2025" required>
+      </div>
+      <div>
+        <label>Категория</label>
+        <select name="category" required></select>
+      </div>
+      <div>
+        <label>Статус</label>
+        <select name="status">
+          <option>VERIFIED</option><option>PENDING</option><option>REJECTED</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label>Заголовок</label>
+      <input name="title" required placeholder="ФЗ-139: реестр блокировок сайтов">
+    </div>
+
+    <div>
+      <label>Краткое описание</label>
+      <textarea name="summary" rows="2" required></textarea>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Теги (через запятую)</label>
+        <input name="tags" placeholder="впн, блокировки">
+      </div>
+      <div>
+        <label>Влияние</label>
+        <select name="impact"><option>LOW</option><option selected>MEDIUM</option><option>HIGH</option></select>
+      </div>
+      <div>
+        <label>Нормативная ссылка</label>
+        <input name="legalRef" placeholder="ФЗ-139">
+      </div>
+    </div>
+
+    <div>
+      <label>Текст (Markdown)</label>
+      <textarea name="body" rows="6" placeholder="### Что произошло…"></textarea>
+    </div>
+
+    <fieldset style="border:1px solid #242836;padding:10px;border-radius:8px">
+      <legend>Источники</legend>
+      <div id="sources" class="sources"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button type="button" id="addSource" class="btn ghost">+ Источник</button>
+        <button type="button" id="clearSources" class="btn ghost">Очистить</button>
+      </div>
+    </fieldset>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" id="download" class="btn">Скачать Markdown</button>
+      <button type="button" id="copy" class="btn ghost">Копировать для Issue</button>
+      <button type="button" id="previewBtn" class="btn ghost">Показать preview</button>
+    </div>
+
+    <pre id="preview" style="display:none"></pre>
+    <p style="color:#9aa3b2;font-size:13px">После скачивания добавь файл в репозиторий или вставь данные в <code>data/entries.json</code>.</p>
+  </form>
+
+  <script>
+    const CATS = ["ЗАКОНЫ","ЦЕНЗУРА","ПОЛИЦИЯ","ЛГБТ","ИНТЕРНЕТ","ОБРАЗОВАНИЕ","КУЛЬТУРА","ЭКОНОМИКА","МОБИЛИЗАЦИЯ","ВЫБОРЫ","ДРУГОЕ"];
+    const catSel = document.querySelector('select[name="category"]');
+    CATS.forEach(c=>catSel.add(new Option(c,c)));
+
+    const sourcesWrap = document.getElementById('sources');
+    document.getElementById('addSource').onclick = addSource;
+    document.getElementById('clearSources').onclick = ()=> sourcesWrap.innerHTML = '';
+
+    function addSource(src = {}) {
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <input name="src_url" placeholder="URL" style="flex:2" value="${src.url || ''}">
+        <input name="src_title" placeholder="Заголовок" style="flex:1" value="${src.title || ''}">
+        <input name="src_publisher" placeholder="Издатель" style="flex:1" value="${src.publisher || ''}">
+        <input name="src_publishedAt" type="date" style="width:140px" value="${src.publishedAt || ''}">
+        <button type="button" class="btn ghost" style="padding:6px" onclick="this.parentNode.remove()">✕</button>
+      `;
+      div.style.display = 'flex'; div.style.gap = '8px'; div.querySelectorAll('input').forEach(i=>i.style.padding='6px');
+      sourcesWrap.appendChild(div);
+    }
+
+    // по умолчанию один источник
+    addSource();
+
+    function readForm() {
+      const f = Object.fromEntries(new FormData(document.getElementById('form')).entries());
+      const sources = [...document.getElementsByName('src_url')].map((_,i)=>({
+        url: document.getElementsByName('src_url')[i].value.trim(),
+        title: document.getElementsByName('src_title')[i].value.trim(),
+        publisher: document.getElementsByName('src_publisher')[i].value.trim(),
+        publishedAt: document.getElementsByName('src_publishedAt')[i].value
+      })).filter(s=>s.url);
+      return {
+        slug: f.slug.trim(),
+        title: f.title.trim(),
+        summary: f.summary.trim(),
+        category: f.category,
+        tags: f.tags.split(',').map(t=>t.trim()).filter(Boolean),
+        country: 'RU',
+        yearFrom: +f.yearFrom || null,
+        yearTo: null,
+        dateStart: f.dateStart || null,
+        dateEnd: null,
+        impact: f.impact || 'MEDIUM',
+        legalRef: f.legalRef || '',
+        status: f.status || 'PENDING',
+        sources,
+        body: f.body || ''
+      };
+    }
+
+    function escapeYaml(s=''){ return s.replace(/"/g,'\\"'); }
+
+    function toMarkdown(d){
+      const fm = [
+        '---',
+        `slug: "${d.slug}"`,
+        `title: "${escapeYaml(d.title)}"`,
+        `summary: "${escapeYaml(d.summary)}"`,
+        `category: "${d.category}"`,
+        `tags: [${d.tags.map(t=>`"${escapeYaml(t)}"`).join(', ')}]`,
+        `country: "${d.country}"`,
+        `yearFrom: ${d.yearFrom || ''}`,
+        `yearTo: ${d.yearTo || ''}`,
+        `dateStart: ${d.dateStart ? `"${d.dateStart}"` : ''}`,
+        `impact: "${d.impact}"`,
+        `legalRef: ${d.legalRef ? `"${escapeYaml(d.legalRef)}"` : ''}`,
+        `status: "${d.status}"`,
+        `sources:`,
+        ...d.sources.map(s=>`  - url: "${s.url}"${s.title?`\n    title: "${escapeYaml(s.title)}"`:''}${s.publisher?`\n    publisher: "${escapeYaml(s.publisher)}"`:''}${s.publishedAt?`\n    publishedAt: "${s.publishedAt}"`:''}`),
+        '---',
+        '',
+        d.body || ''
+      ].join('\n');
+      return fm;
+    }
+
+    function downloadFile(name, text){
+      const blob = new Blob([text], {type: 'text/markdown;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(a.href);
+    }
+
+    document.getElementById('download').onclick = ()=>{
+      try {
+        const d = readForm();
+        if(!d.slug || !d.title) return alert('Заполните slug и title');
+        const md = toMarkdown(d);
+        downloadFile(`${d.yearFrom || 'new'}-${d.slug}.md`, md);
+      } catch(e){ alert(e.message) }
+    };
+
+    document.getElementById('copy').onclick = async ()=>{
+      const d = readForm();
+      const lines = [
+        `Заголовок: ${d.title}`,
+        `Категория: ${d.category}`,
+        `Год: ${d.yearFrom || '-'}`,
+        `Кратко: ${d.summary}`,
+        `Юр. ссылка: ${d.legalRef || '-'}`,
+        `Источники:`,
+        ...(d.sources.length ? d.sources.map(s=>`- ${s.url} ${s.title?`(${s.title})`:''}`) : ['- (нет источников)']),
+        '',
+        'Текст:',
+        d.body || '(пусто)'
+      ].join('\n');
+      await navigator.clipboard.writeText(lines);
+      alert('Скопировано в буфер.');
+    };
+
+    document.getElementById('previewBtn').onclick = ()=>{
+      const md = toMarkdown(readForm());
+      const pre = document.getElementById('preview');
+      pre.textContent = md;
+      pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
+    };
+  </script>
+</body>
+</html>

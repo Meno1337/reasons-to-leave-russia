@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Причины уехать из России (2010–2025)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-page="home">
+<header class="container">
+  <h1>Причины уехать из России <small>2010–2025</small></h1>
+  <nav>
+    <a href="add.html" class="button">Добавить запись</a>
+    <a href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</header>
+
+<main class="container">
+  <section class="panel">
+    <div class="field">
+      <label for="q">Поиск</label>
+      <input id="q" type="search" placeholder="запрос, закон, событие, теги…" />
+    </div>
+    <div class="grid">
+      <div class="field">
+        <label for="yearMin">Годы</label>
+        <div class="range">
+          <input id="yearMin" type="range" min="2010" max="2025" value="2010" />
+          <input id="yearMax" type="range" min="2010" max="2025" value="2025" />
+        </div>
+        <div class="hint"><span id="yearMinLabel">2010</span>—<span id="yearMaxLabel">2025</span></div>
+      </div>
+
+      <div class="field">
+        <label>Категории</label>
+        <div id="catList" class="chips"></div>
+      </div>
+
+      <div class="field">
+        <label class="checkbox">
+          <input id="onlyVerified" type="checkbox" /> Только проверенные
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <button id="toggleView" class="button" type="button" title="Переключить вид">Вид: блоки</button>
+    </div>
+  </section>
+
+  <section id="results" class="cards"></section>
+  <p id="count" class="muted"></p>
+</main>
+
+<footer class="container muted">
+  Сделано на HTML/CSS/JS. Данные: <code>data/entries.json</code>. Источники принадлежат их правообладателям.
+</footer>
+
+<!-- Модалка записи -->
+<dialog id="entryModal">
+  <article id="entryContent"></article>
+  <button id="closeModal" class="button">Закрыть</button>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>
+```
