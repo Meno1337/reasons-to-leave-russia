@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // ---------- HOME ----------
 async function initHome() {
   const data = await fetch("data/entries.json").then(r => r.json()).catch(() => ({entries:[]}));
-  const entries = data.entries || [];
+  let entries = data.entries || [];
   const q = $("#q"), yearMin = $("#yearMin"), yearMax = $("#yearMax"),
         yearMinLabel = $("#yearMinLabel"), yearMaxLabel = $("#yearMaxLabel"),
         onlyVerified = $("#onlyVerified"), catList = $("#catList");
@@ -99,7 +99,51 @@ async function initHome() {
     const wrap = $("#results");
     wrap.innerHTML = "";
     results.forEach(e => {
-      const card = el("div", {class:"card"});
+      const card = el("div", {class:"card", style:"position:relative;"});
+      // --- Многоточие и меню ---
+      const menuBtn = el("button", {
+        class: "menu-btn",
+        style: "position:absolute;top:8px;right:8px;padding:2px 8px;border:none;background:transparent;font-size:20px;cursor:pointer;color:#fff;",
+        onclick: (ev) => {
+          ev.stopPropagation();
+          document.querySelectorAll('.card-menu').forEach(m => m.style.display = 'none');
+          menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+      }, ["⋮"]);
+      const menu = el("div", {
+        class: "card-menu",
+        style: "display:none;position:absolute;top:32px;right:8px;background:#fff;border:1px solid #ccc;box-shadow:0 2px 8px #0002;z-index:10;padding:0.5em 0;border-radius:4px;min-width:120px;"
+      }, [
+        el("button", {
+          style: "display:block;width:100%;border:none;background:none;padding:8px 16px;text-align:left;cursor:pointer;",
+          onclick: (ev) => {
+            ev.stopPropagation();
+            menu.style.display = 'none';
+            window.location.href = `add.html?slug=${encodeURIComponent(e.slug)}`;
+          }
+        }, ["Редактировать"]),
+        el("button", {
+          style: "display:block;width:100%;border:none;background:none;padding:8px 16px;text-align:left;cursor:pointer;color:#c00;",
+          onclick: (ev) => {
+            ev.stopPropagation();
+            menu.style.display = 'none';
+            if (confirm('Удалить запись: "' + e.title + '"?')) {
+              // Удаляем из массива и перерисовываем
+              entries = entries.filter(item => item.slug !== e.slug);
+              render();
+              // Можно добавить уведомление
+              // alert('Запись удалена (только на клиенте, до перезагрузки страницы)');
+            }
+          }
+        }, ["Удалить"])
+      ]);
+      // Закрытие меню при клике вне карточки
+      card.addEventListener('click', () => { menu.style.display = 'none'; });
+      document.addEventListener('click', (ev) => {
+        if (!card.contains(ev.target)) menu.style.display = 'none';
+      });
+      card.append(menuBtn, menu);
+      // --- конец многоточия ---
       card.append(
         el("div", {class:"badges"}, [
           badge(e.category),

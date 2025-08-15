@@ -218,6 +218,37 @@
       pre.textContent = md;
       pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
     };
+
+    // --- Автозаполнение при редактировании ---
+    (async function fillFormIfEdit() {
+      const params = new URLSearchParams(location.search);
+      const slug = params.get('slug');
+      if (!slug) return;
+      // Получаем данные из entries.json
+      try {
+        const res = await fetch('data/entries.json');
+        const data = await res.json();
+        const entry = (data.entries || []).find(e => e.slug === slug);
+        if (!entry) return;
+        // Заполняем поля формы
+        const f = document.getElementById('form');
+        f.elements.slug.value = entry.slug || '';
+        f.elements.title.value = entry.title || '';
+        f.elements.summary.value = entry.summary || '';
+        f.elements.category.value = entry.category || '';
+        f.elements.tags.value = (entry.tags || []).join(', ');
+        f.elements.yearFrom.value = entry.yearFrom || '';
+        if (f.elements.status) f.elements.status.value = entry.status || 'VERIFIED';
+        if (f.elements.impact) f.elements.impact.value = entry.impact || 'MEDIUM';
+        f.elements.legalRef.value = entry.legalRef || '';
+        f.elements.body.value = entry.body || '';
+        // Очищаем и заполняем источники
+        sourcesWrap.innerHTML = '';
+        (entry.sources || []).forEach(src => addSource(src));
+      } catch (e) {
+        // ignore
+      }
+    })();
   </script>
 </body>
 </html>
